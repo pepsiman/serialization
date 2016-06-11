@@ -110,6 +110,36 @@ int test_non_default_constructible()
     return test_vector_detail(avector);
 }
 
+// class without copy constructor
+struct Y {
+    //BOOST_DELETED_FUNCTION(Y(const Y&));
+public:
+    int m_i;
+    Y(const Y &) = delete;
+    Y& operator=(const Y &) = delete;
+    Y(Y &&) = default;
+    Y& operator=(Y &&) = default;
+    Y(const int & i) :
+        m_i(i)
+    {}
+    bool operator==(const Y & rhs) const {
+        return m_i == rhs.m_i;
+    }
+    template<class Archive>
+    void serialize(Archive & ar, const unsigned int /*version*/){
+        ar & BOOST_SERIALIZATION_NVP(m_i);
+    }
+};
+
+int test_non_copy_constructible()
+{
+    // test array of objects
+    std::vector<Y> avector;
+    avector.push_back(Y(123));
+    avector.push_back(Y(456));
+    return test_vector_detail(avector);
+}
+
 int test_main( int /* argc */, char* /* argv */[] )
 {
     int res;
@@ -122,6 +152,8 @@ int test_main( int /* argc */, char* /* argv */[] )
         res = test_default_constructible<bool>();
     if (res == EXIT_SUCCESS)
         res = test_non_default_constructible();
+    if (res == EXIT_SUCCESS)
+        res = test_non_copy_constructible();
     return res;
 }
 
